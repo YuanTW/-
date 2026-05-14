@@ -1,7 +1,7 @@
 """
 app.py — 量化交易儀表板 v2
 ===========================
-首頁  : 2 欄策略卡 · 近一年累積報酬圖 · 圈選/滾輪縮放
+首頁  : 3 欄策略卡（3×3）· 近一年累積報酬圖 · 圈選/滾輪縮放
 詳情頁: 左側導航進入 · 6 大統計指標 · 多段期間選擇 · 累積報酬 + 回撤雙圖
 """
 
@@ -80,14 +80,17 @@ html, body,
     border: none !important;
     color: #8b949e !important;
     text-align: left !important;
-    font-size: 0.83rem !important;
+    font-size: 0.76rem !important;
     font-weight: 500 !important;
-    padding: 6px 10px !important;
-    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    border-radius: 5px !important;
     width: 100% !important;
     transition: background 0.15s, color 0.15s !important;
-    margin-bottom: 1px !important;
+    margin-bottom: 0px !important;
     justify-content: flex-start !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1.4 !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     background: #161b22 !important;
@@ -97,7 +100,7 @@ html, body,
     background: rgba(31,111,235,0.12) !important;
     color: #58a6ff !important;
     border-left: 2px solid #1f6feb !important;
-    border-radius: 0 6px 6px 0 !important;
+    border-radius: 0 5px 5px 0 !important;
     font-weight: 600 !important;
 }
 
@@ -105,20 +108,20 @@ html, body,
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
     background: #161b22 !important;
     border: 1px solid #21262d !important;
-    border-radius: 14px !important;
-    padding: 1.1rem 1.25rem 1rem !important;
+    border-radius: 10px !important;
+    padding: 0.7rem 0.85rem 0.65rem !important;
     transition: border-color 0.2s, box-shadow 0.25s !important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     border-color: #30363d !important;
-    box-shadow: 0 6px 30px rgba(0,0,0,0.45) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
 }
 
 /* ── 訊號徽章 ───────────────────────────────────────────────────────────── */
 .badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 11px; border-radius: 20px;
-    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.35px;
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
     white-space: nowrap;
 }
 .b-long    { background:rgba(63,185,80,.13);  color:#3fb950; border:1px solid rgba(63,185,80,.3); }
@@ -126,10 +129,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
 .b-neutral { background:rgba(210,153,34,.13); color:#d29922; border:1px solid rgba(210,153,34,.3); }
 
 /* ── 指標 ───────────────────────────────────────────────────────────────── */
-.met      { text-align:center; padding:6px 2px 8px; }
-.met-v    { font-size:1.1rem; font-weight:700; line-height:1.25; }
-.met-l    { font-size:0.65rem; color:#6e7681; margin-top:3px;
-            text-transform:uppercase; letter-spacing:0.5px; }
+.met      { text-align:center; padding:3px 2px 5px; }
+.met-v    { font-size:0.9rem; font-weight:700; line-height:1.2; }
+.met-l    { font-size:0.58rem; color:#6e7681; margin-top:2px;
+            text-transform:uppercase; letter-spacing:0.4px; }
 
 /* ── 詳情頁 stat cards ──────────────────────────────────────────────────── */
 .sc {
@@ -300,8 +303,8 @@ def build_home_chart(ret: pd.Series) -> go.Figure:
     fig = go.Figure(_cum_trace(r))
     fig.add_hline(y=0, line_dash="dot",
                   line_color="rgba(139,148,158,0.18)", line_width=1)
-    fig.update_layout(**_BASE_LAYOUT, height=185,
-                      margin=dict(l=0, r=0, t=6, b=0))
+    fig.update_layout(**_BASE_LAYOUT, height=120,
+                      margin=dict(l=0, r=0, t=4, b=0))
     fig.update_xaxes(**_XAX)
     fig.update_yaxes(**_YAX)
     return fig
@@ -385,18 +388,16 @@ _CHART_CFG = {
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("""
-    <div style="padding:1.1rem 0.6rem 0.9rem;
-                border-bottom:1px solid #21262d; margin-bottom:0.6rem;">
-        <p style="font-size:0.98rem;font-weight:700;color:#e6edf3;margin:0;
+    <div style="padding:0.7rem 0.5rem 0.6rem;
+                border-bottom:1px solid #21262d; margin-bottom:0.3rem;">
+        <p style="font-size:0.88rem;font-weight:700;color:#e6edf3;margin:0;
                   letter-spacing:-0.2px">📈 量化交易儀表板</p>
-        <p style="font-size:0.68rem;color:#6e7681;margin:4px 0 0">
-            Quant Trading Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
 
     # 總覽按鈕
     is_home = st.session_state.page == "home"
-    if st.button("🏠  總覽",
+    if st.button("🏠 總覽",
                  key="nav_home",
                  type="primary" if is_home else "secondary",
                  use_container_width=True):
@@ -404,9 +405,9 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("""
-    <p style="font-size:0.63rem;color:#6e7681;
-              padding:10px 8px 4px;margin:0;
-              text-transform:uppercase;letter-spacing:0.7px;">策略</p>
+    <p style="font-size:0.58rem;color:#6e7681;
+              padding:6px 6px 2px;margin:0;
+              text-transform:uppercase;letter-spacing:0.7px;">策略列表</p>
     """, unsafe_allow_html=True)
 
     # 各策略導航
@@ -415,7 +416,7 @@ with st.sidebar:
         res = get_result(cfg)
         sig = res.get("signal", "NEUTRAL") if res.get("success") else "NEUTRAL"
         dot = {"LONG": "🟢", "SHORT": "🔴", "NEUTRAL": "🟡"}.get(sig, "⚪")
-        if st.button(f"{dot}  {cfg['name']}",
+        if st.button(f"{dot} {cfg['name']}",
                      key=f"nav_{cfg['id']}",
                      type="primary" if is_active else "secondary",
                      use_container_width=True):
@@ -424,9 +425,9 @@ with st.sidebar:
 
     # 全部刷新
     st.markdown("""
-    <div style="border-top:1px solid #21262d;margin:14px 0 8px;"></div>
+    <div style="border-top:1px solid #21262d;margin:8px 0 4px;"></div>
     """, unsafe_allow_html=True)
-    if st.button("🔄  全部刷新", use_container_width=True):
+    if st.button("🔄 全部刷新", use_container_width=True):
         t = time.time()
         for c in STRATEGY_REGISTRY:
             st.session_state.ts[c["id"]] = t
@@ -447,9 +448,9 @@ def render_home():
     </div>
     """, unsafe_allow_html=True)
 
-    cols = st.columns(2, gap="medium")
+    cols = st.columns(3, gap="small")
     for i, cfg in enumerate(STRATEGY_REGISTRY):
-        with cols[i % 2]:
+        with cols[i % 3]:
             with st.container(border=True):
                 res = get_result(cfg)
                 ret = res.get("returns") if res.get("success") else None
@@ -459,8 +460,9 @@ def render_home():
                 tl, tr = st.columns([3, 2])
                 with tl:
                     st.markdown(
-                        f"<p style='font-weight:700;font-size:0.9rem;"
-                        f"color:#e6edf3;margin:0;letter-spacing:-0.1px'>"
+                        f"<p style='font-weight:700;font-size:0.78rem;"
+                        f"color:#e6edf3;margin:0;letter-spacing:-0.1px;"
+                        f"white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>"
                         f"{cfg['name']}</p>",
                         unsafe_allow_html=True)
                 with tr:
@@ -468,7 +470,7 @@ def render_home():
                         b = _badge(res.get("signal", "NEUTRAL"),
                                    res.get("recommendation", "觀望"))
                         st.markdown(
-                            f"<div style='text-align:right;padding-top:2px'>{b}</div>",
+                            f"<div style='text-align:right;padding-top:1px'>{b}</div>",
                             unsafe_allow_html=True)
 
                 if not res.get("success"):
@@ -482,7 +484,7 @@ def render_home():
                         st.markdown(
                             f"<div class='met'>"
                             f"<div class='met-v' style='color:{_c(v)}'>{_fp(v)}</div>"
-                            f"<div class='met-l'>近一年報酬</div></div>",
+                            f"<div class='met-l'>近一年</div></div>",
                             unsafe_allow_html=True)
                     with qb:
                         v = m.get("sharpe", 0)
