@@ -1,0 +1,64 @@
+name: 通知 — DM Risk Parity
+
+on:
+  schedule:
+    # 每月 1~7 日的工作日，台灣時間晚上 21:00 = UTC 13:00
+    # 由腳本內部判斷是否為「當月第二個工作日」，不是就自動跳過
+    - cron: '0 13 1-7 * 1-5'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安裝套件
+        run: |
+          pip install --quiet \
+            jupyter nbconvert \
+            pandas numpy pytz requests \
+            yfinance matplotlib plotly
+
+      - name: 判斷是否為當月第二個工作日（台灣時間）
+        id: check_day
+        run: |
+          python - << 'PYEOF'
+          import datetime, pytz, os
+          tz    = pytz.timezone("Asia/Taipei")
+          today = datetime.datetime.now(tz).date()
+          biz   = 0
+          for d in range(1, today.day + 1):
+              if datetime.date(today.year, today.month, d).weekday() < 5:
+                  biz += 1
+          is_second = "true" if biz == 2 else "false"
+          print(f"今天是當月第 {biz} 個工作日，is_second={is_second}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"is_second={is_second}\n")
+          PYEOF
+
+      - name: 執行策略並發送 Telegram 通知
+        if: steps.check_day.outputs.is_second == 'true'
+        env:
+          TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python notify_runner.py DM_Risk_Parity.ipynb dm_risk
+
+      - name: 儲存方向狀態回 repo
+        if: steps.check_day.outputs.is_second == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add strategy_states.json
+          git diff --staged --quiet || git commit -m "chore: update strategy state [skip ci]"
+          git push
